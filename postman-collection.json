@@ -1,0 +1,437 @@
+{
+  "info": {
+    "_postman_id": "bfde2b11-8192-408a-8f31-2602e1a24a00",
+    "name": "Blogging Platform API",
+    "description": "Complete Postman Collection for the RESTful Blog API. Follows best practices with dynamic variables and automatic authentication token saving scripts.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice_dev\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"aliceSecurePass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Creates a new user profile. The password is encrypted on the server."
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (pm.response.code === 200 && response.data && response.data.token) {",
+                  "    pm.collectionVariables.set(\"token\", response.data.token);",
+                  "    console.log(\"Access JWT token captured and stored in collection variables!\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"aliceSecurePass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticates user credentials. Returns a signed JWT token which is automatically extracted and saved to the 'token' variable for subsequent authorized requests."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile (Me)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Retrieves the currently authenticated user's information. Requires the JWT bearer token."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Blog Posts",
+      "item": [
+        {
+          "name": "Get All Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts?search=Node",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "posts"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Node",
+                  "description": "Optional search filter (searches titles/content)"
+                },
+                {
+                  "key": "authorId",
+                  "value": "",
+                  "description": "Optional filter by specific author ID",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Public endpoint to search or fetch all published posts."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (pm.response.code === 201 && response.data && response.data.post) {",
+                  "    pm.collectionVariables.set(\"postId\", response.data.post.id);",
+                  "    console.log(\"Created post ID saved to variable: \" + response.data.post.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Deep Dive into Node.js Event Loop\",\n  \"content\": \"The event loop lies at the very heart of Node.js. It is what makes Node.js non-blocking and single-threaded...\",\n  \"tags\": [\"nodejs\", \"javascript\", \"architecture\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "posts"
+              ]
+            },
+            "description": "Secured endpoint. Creates a new blog post. Automatically saves the returned post's ID to 'postId' collection variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Post By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "posts",
+                "{{postId}}"
+              ]
+            },
+            "description": "Public endpoint. Fetches details for a single blog post, returning its author profile and nesting its full comments thread."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Post",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Deep Dive into Node.js Event Loop (Part 1)\",\n  \"content\": \"Let us expand on our event loop post. This covers phase tasks: timers, poll, check, and close handlers.\",\n  \"tags\": [\"nodejs\", \"event-loop\", \"advanced\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "posts",
+                "{{postId}}"
+              ]
+            },
+            "description": "Secured endpoint. Updates the title, content, or tags of a post. The logged-in user must be the author of the post."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Post",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "posts",
+                "{{postId}}"
+              ]
+            },
+            "description": "Secured endpoint. Deletes a post and purges all of its comments. The logged-in user must be the author of the post."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Comments Section",
+      "item": [
+        {
+          "name": "Get Post Comments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "posts",
+                "{{postId}}",
+                "comments"
+              ]
+            },
+            "description": "Public endpoint. Fetch comments associated with a post."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (pm.response.code === 201 && response.data && response.data.comment) {",
+                  "    pm.collectionVariables.set(\"commentId\", response.data.comment.id);",
+                  "    console.log(\"Created comment ID saved to variable: \" + response.data.comment.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Wow! This breakdown of the poll phase and microtask queues is exceptionally clear!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "posts",
+                "{{postId}}",
+                "comments"
+              ]
+            },
+            "description": "Secured endpoint. Appends a comment to the designated post. Saves the returned comment ID to 'commentId' variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{postId}}/comments/{{commentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "posts",
+                "{{postId}}",
+                "comments",
+                "{{commentId}}"
+              ]
+            },
+            "description": "Secured endpoint. Removes a comment from a post. Validates that the logged-in user is either the comment writer or the author of the blog post (moderator privilege)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "postId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "commentId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
